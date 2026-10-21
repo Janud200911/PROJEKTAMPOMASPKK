@@ -1,0 +1,198 @@
+/* ==============================
+   HALAMAN PRODUK
+================================= */
+
+.produk-page {
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 0 25px;
+}
+
+
+/* ==============================
+   HEADER PRODUK
+================================= */
+
+.produk-header {
+    margin-bottom: 35px;
+}
+
+.produk-label {
+    color: #168044;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.produk-header h1 {
+    margin: 5px 0 8px;
+    font-size: 42px;
+    color: #111;
+}
+
+.produk-header p {
+    margin: 0;
+    color: #777;
+    font-size: 16px;
+}
+
+
+/* ==============================
+   GRID PRODUK
+================================= */
+
+.produk-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+}
+
+
+/* ==============================
+   CARD PRODUK
+================================= */
+
+.produk-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: 0.2s;
+}
+
+.produk-card:hover {
+    border-color: #cfcfcf;
+}
+
+
+/* ==============================
+   GAMBAR PRODUK
+================================= */
+
+.produk-image {
+    height: 250px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #f7f3ed;
+
+    font-size: 90px;
+}
+
+
+/* ==============================
+   INFORMASI PRODUK
+================================= */
+
+.produk-info {
+    padding: 25px 30px 30px;
+}
+
+.produk-kategori {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #168044;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.produk-info h2 {
+    margin: 0 0 8px;
+
+    font-size: 30px;
+    color: #111;
+}
+
+.produk-info p {
+    margin: 0 0 22px;
+
+    color: #777;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+
+/* ==============================
+   HARGA + BUTTON
+================================= */
+
+.produk-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.produk-harga {
+    font-size: 20px;
+    font-weight: bold;
+    color: #111;
+}
+
+.produk-harga span {
+    font-size: 14px;
+    font-weight: normal;
+    color: #555;
+}
+
+
+/* ==============================
+   BUTTON BELI
+================================= */
+
+.btn-beli {
+    display: inline-block;
+
+    padding: 11px 22px;
+
+    background: #168044;
+    color: white;
+
+    border-radius: 7px;
+
+    text-decoration: none;
+    font-weight: bold;
+
+    transition: 0.2s;
+}
+
+.btn-beli:hover {
+    background: #126b39;
+}
+
+
+/* ==============================
+   STOK HABIS
+================================= */
+
+.stok-habis {
+    color: #d33;
+    font-weight: bold;
+}
+
+
+/* ==============================
+   RESPONSIVE
+================================= */
+
+@media (max-width: 700px) {
+
+    .produk-page {
+        margin-top: 30px;
+    }
+
+    .produk-header h1 {
+        font-size: 32px;
+    }
+
+    .produk-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .produk-image {
+        height: 210px;
+    }
+
+}
