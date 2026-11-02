@@ -2570,3 +2570,38 @@ a {
         page-break-inside: avoid;
     }
 }
+
+
+
+/* GAMBAR QRIS */
+.qris-gambar {
+    display: block;
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    margin: 20px auto;
+    object-fit: contain;
+    background: #ffffff;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #dddddd;
+}
+
+.qris-placeholder h3 {
+    text-align: center;
+    color: #218344;
+    margin-bottom: 15px;
+}
+
+.qris-placeholder p,
+.qris-placeholder span {
+    display: block;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.qris-placeholder span {
+    color: #218344;
+    font-size: 13px;
+    margin-top: 10px;
+}

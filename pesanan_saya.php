@@ -1,3 +1,4 @@
+
 <?php
 session_start();
 
@@ -43,6 +44,12 @@ function formatTanggal($tanggal)
     return date("d-m-Y", $timestamp);
 }
 
+// Cek apakah pembayaran dilakukan secara online
+function pembayaranOnline($metode)
+{
+    return in_array($metode, ["qris", "transfer"], true);
+}
+
 // Ambil detail pesanan
 $detailPesanan = null;
 $detailProduk = [];
@@ -59,7 +66,7 @@ if (isset($_GET["id"])) {
             "SELECT *
              FROM tpesanan
              WHERE id_pesanan = ?
-               AND id_user = ?"
+             AND id_user = ?"
         );
 
         mysqli_stmt_bind_param(
@@ -102,13 +109,12 @@ if (isset($_GET["id"])) {
 
             mysqli_stmt_close($stmtDetail);
         } else {
-            $pesanError =
-                "Pesanan tidak ditemukan atau bukan milik akun kamu.";
+            $pesanError = "Pesanan tidak ditemukan atau bukan milik akun kamu.";
         }
     }
 }
 
-// Ambil riwayat pesanan milik pelanggan yang login
+// Ambil riwayat pesanan milik pelanggan
 $stmtRiwayat = mysqli_prepare(
     $koneksi,
     "SELECT *
@@ -135,251 +141,269 @@ $hasilRiwayat = mysqli_stmt_get_result($stmtRiwayat);
     <link rel="stylesheet" href="assets/style.css">
 
     <style>
-    .riwayat-halaman {
-        max-width: 1100px;
-        width: 92%;
-        margin: 40px auto 60px;
-        color: #26352a;
-    }
-
-    .riwayat-judul {
-        margin-bottom: 8px;
-        color: #176b35;
-    }
-
-    .riwayat-deskripsi {
-        color: #68756b;
-        margin-bottom: 25px;
-    }
-
-    .riwayat-kartu {
-        background: #fff;
-        border: 1px solid #e4ebe5;
-        border-radius: 12px;
-        padding: 22px;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-    }
-
-    .riwayat-scroll {
-        overflow-x: auto;
-    }
-
-    .riwayat-tabel {
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 950px;
-    }
-
-    .riwayat-tabel th,
-    .riwayat-tabel td {
-        padding: 13px 12px;
-        border-bottom: 1px solid #edf0ed;
-        text-align: left;
-        font-size: 14px;
-    }
-
-    .riwayat-tabel th {
-        background: #f2f8f2;
-        color: #285a36;
-    }
-
-    .riwayat-tabel tr:last-child td {
-        border-bottom: none;
-    }
-
-    .riwayat-status {
-        display: inline-block;
-        padding: 6px 9px;
-        border-radius: 20px;
-        background: #f0f0f0;
-        color: #555;
-        font-size: 12px;
-        white-space: nowrap;
-    }
-
-    .status-lunas,
-    .status-selesai,
-    .status-siap_diambil {
-        background: #e1f5e5;
-        color: #176b35;
-    }
-
-    .status-menunggu,
-    .status-belum_bayar,
-    .status-menunggu_verifikasi,
-    .status-diproses {
-        background: #fff3d8;
-        color: #8b6100;
-    }
-
-    .status-dibatalkan {
-        background: #fde7e7;
-        color: #a52626;
-    }
-
-    .riwayat-btn-detail,
-    .btn-bayar-qris,
-    .riwayat-btn-kembali {
-        display: inline-block;
-        border: none;
-        border-radius: 7px;
-        padding: 9px 12px;
-        text-decoration: none;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        text-align: center;
-    }
-
-    .riwayat-btn-detail {
-        background: #e8f3e9;
-        color: #176b35;
-    }
-
-    .riwayat-btn-detail:hover {
-        background: #d8eadb;
-    }
-
-    .btn-bayar-qris {
-        margin-top: 6px;
-        background: #21823b;
-        color: #fff;
-    }
-
-    .btn-bayar-qris:hover {
-        background: #176b2b;
-    }
-
-    .riwayat-btn-kembali {
-        margin-bottom: 18px;
-        background: #edf2ed;
-        color: #285a36;
-    }
-
-    .riwayat-notifikasi {
-        padding: 14px;
-        border-radius: 8px;
-        margin: 15px 0;
-        background: #fff3d8;
-        color: #795500;
-    }
-
-    .riwayat-kosong {
-        padding: 28px 12px;
-        text-align: center;
-        color: #68756b;
-    }
-
-    .detail-ringkasan {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 15px;
-        margin: 20px 0;
-    }
-
-    .detail-item {
-        padding: 15px;
-        background: #f5f9f5;
-        border-radius: 8px;
-        overflow-wrap: anywhere;
-    }
-
-    .detail-item span {
-        display: block;
-        color: #68756b;
-        font-size: 13px;
-        margin-bottom: 6px;
-    }
-
-    .detail-item strong {
-        color: #245d34;
-    }
-
-    .riwayat-aksi {
-        min-width: 135px;
-    }
-
-    @media (max-width: 600px) {
-        .riwayat-kartu {
-            padding: 15px;
-        }
-
         .riwayat-halaman {
-            margin-top: 25px;
+            max-width: 1100px;
+            width: 92%;
+            margin: 40px auto 60px;
+            color: #26352a;
         }
-    }
+
+        .riwayat-judul {
+            margin-bottom: 8px;
+            color: #176b35;
+        }
+
+        .riwayat-deskripsi {
+            color: #68756b;
+            margin-bottom: 25px;
+        }
+
+        .riwayat-kartu {
+            background: #fff;
+            border: 1px solid #e4ebe5;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+        }
+
+        .riwayat-scroll {
+            overflow-x: auto;
+        }
+
+        .riwayat-tabel {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 950px;
+        }
+
+        .riwayat-tabel th,
+        .riwayat-tabel td {
+            padding: 13px 12px;
+            border-bottom: 1px solid #edf0ed;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .riwayat-tabel th {
+            background: #f2f8f2;
+            color: #285a36;
+        }
+
+        .riwayat-tabel tr:last-child td {
+            border-bottom: none;
+        }
+
+        .riwayat-status {
+            display: inline-block;
+            padding: 6px 9px;
+            border-radius: 20px;
+            background: #f0f0f0;
+            color: #555;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .status-lunas,
+        .status-selesai,
+        .status-siap_diambil {
+            background: #e1f5e5;
+            color: #176b35;
+        }
+
+        .status-menunggu,
+        .status-belum_bayar,
+        .status-menunggu_verifikasi,
+        .status-diproses {
+            background: #fff3d8;
+            color: #8b6100;
+        }
+
+        .status-ditolak,
+        .status-dibatalkan {
+            background: #fde7e7;
+            color: #a52626;
+        }
+
+        .riwayat-btn-detail,
+        .btn-bayar,
+        .riwayat-btn-kembali {
+            display: inline-block;
+            border: none;
+            border-radius: 7px;
+            padding: 9px 12px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .riwayat-btn-detail {
+            background: #e8f3e9;
+            color: #176b35;
+        }
+
+        .riwayat-btn-detail:hover {
+            background: #d8eadb;
+        }
+
+        .btn-bayar {
+            margin-top: 6px;
+            background: #21823b;
+            color: #fff;
+        }
+
+        .btn-bayar:hover {
+            background: #176b2b;
+        }
+
+        .riwayat-btn-kembali {
+            margin-bottom: 18px;
+            background: #edf2ed;
+            color: #285a36;
+        }
+
+        .riwayat-notifikasi {
+            padding: 14px;
+            border-radius: 8px;
+            margin: 15px 0;
+            background: #fff3d8;
+            color: #795500;
+        }
+
+        .notifikasi-sukses {
+            background: #e1f5e5;
+            color: #176b35;
+        }
+
+        .notifikasi-gagal {
+            background: #fde7e7;
+            color: #a52626;
+        }
+
+        .riwayat-kosong {
+            padding: 28px 12px;
+            text-align: center;
+            color: #68756b;
+        }
+
+        .detail-ringkasan {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .detail-item {
+            padding: 15px;
+            background: #f5f9f5;
+            border-radius: 8px;
+            overflow-wrap: anywhere;
+        }
+
+        .detail-item span {
+            display: block;
+            color: #68756b;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .detail-item strong {
+            color: #245d34;
+        }
+
+        .riwayat-aksi {
+            min-width: 135px;
+        }
+
+        @media (max-width: 600px) {
+            .riwayat-kartu {
+                padding: 15px;
+            }
+
+            .riwayat-halaman {
+                margin-top: 25px;
+            }
+        }
     </style>
 </head>
 
 <body>
 
-    <header class="navbar">
-        <div class="container nav-container">
+<header class="navbar">
+    <div class="container nav-container">
 
-            <a href="index.php" class="logo">
-                <span>🥬</span> Tampomas Berkah
+        <a href="index.php" class="logo">
+            <span>🥬</span> Tampomas Berkah
+        </a>
+
+        <nav class="nav-menu">
+            <a href="index.php">Beranda</a>
+            <a href="produk.php">Produk</a>
+            <a href="pesanan_saya.php" class="active">Pesanan Saya</a>
+            <a href="tentang.php">Tentang</a>
+
+            <a href="keranjang.php" class="cart-btn">
+                🛒 <span>Keranjang</span>
             </a>
 
-            <nav class="nav-menu">
-                <a href="index.php">Beranda</a>
-                <a href="produk.php">Produk</a>
-                <a href="pesanan_saya.php" class="active">Pesanan Saya</a>
-                <a href="tentang.php">Tentang</a>
-
-                <a href="keranjang.php" class="cart-btn">
-                    🛒 <span>Keranjang</span>
-                </a>
-
-                <div class="user-menu">
-                    <div class="user-info">
-                        <div class="user-icon">
-                            <?= htmlspecialchars(
+            <div class="user-menu">
+                <div class="user-info">
+                    <div class="user-icon">
+                        <?= htmlspecialchars(
                             strtoupper(substr($namaUser, 0, 1)),
                             ENT_QUOTES,
                             "UTF-8"
                         ); ?>
-                        </div>
+                    </div>
 
-                        <div class="user-text">
-                            <span>Halo,</span>
+                    <div class="user-text">
+                        <span>Halo,</span>
 
-                            <strong>
-                                <?= htmlspecialchars(
+                        <strong>
+                            <?= htmlspecialchars(
                                 $namaUser,
                                 ENT_QUOTES,
                                 "UTF-8"
                             ); ?>
-                            </strong>
-                        </div>
+                        </strong>
                     </div>
-
-                    <a href="logout.php" class="logout-btn">
-                        Logout
-                    </a>
                 </div>
-            </nav>
 
-        </div>
-    </header>
+                <a href="logout.php" class="logout-btn">
+                    Logout
+                </a>
+            </div>
+        </nav>
 
-    <main class="riwayat-halaman">
+    </div>
+</header>
 
-        <h1 class="riwayat-judul">Pesanan Saya</h1>
+<main class="riwayat-halaman">
 
-        <p class="riwayat-deskripsi">
-            Halo,
-            <?= htmlspecialchars($namaUser, ENT_QUOTES, "UTF-8"); ?>!
-            Berikut riwayat dan status pesanan kamu.
-        </p>
+    <h1 class="riwayat-judul">Pesanan Saya</h1>
 
-        <?php if (isset($_GET["sukses"])): ?>
-        <div class="riwayat-notifikasi">
+    <p class="riwayat-deskripsi">
+        Halo, <?= htmlspecialchars($namaUser, ENT_QUOTES, "UTF-8"); ?>!
+        Berikut riwayat dan status pesanan kamu.
+    </p>
+
+    <?php if (isset($_GET["sukses"])): ?>
+        <div class="riwayat-notifikasi notifikasi-sukses">
             Pesanan berhasil dibuat. Silakan periksa detail pesanan kamu.
         </div>
-        <?php endif; ?>
+    <?php endif; ?>
 
-        <?php if (isset($_GET["id"])): ?>
+    <?php if (isset($_GET["upload"])): ?>
+        <?php if ($_GET["upload"] === "berhasil"): ?>
+            <div class="riwayat-notifikasi notifikasi-sukses">
+                Bukti pembayaran berhasil diunggah dan sedang menunggu verifikasi admin.
+            </div>
+        <?php endif; ?>
+    <?php endif; ?>
+
+    <?php if (isset($_GET["id"])): ?>
 
         <a href="pesanan_saya.php" class="riwayat-btn-kembali">
             ← Kembali ke Riwayat
@@ -387,349 +411,401 @@ $hasilRiwayat = mysqli_stmt_get_result($stmtRiwayat);
 
         <?php if ($pesanError !== ""): ?>
 
-        <div class="riwayat-kartu">
-            <div class="riwayat-notifikasi">
-                <?= htmlspecialchars(
-                        $pesanError,
-                        ENT_QUOTES,
-                        "UTF-8"
-                    ); ?>
+            <div class="riwayat-kartu">
+                <div class="riwayat-notifikasi notifikasi-gagal">
+                    <?= htmlspecialchars($pesanError, ENT_QUOTES, "UTF-8"); ?>
+                </div>
             </div>
-        </div>
 
         <?php elseif ($detailPesanan): ?>
 
-        <section class="riwayat-kartu">
+            <section class="riwayat-kartu">
 
-            <h2>
-                Detail Pesanan
-                #<?= (int) $detailPesanan["id_pesanan"]; ?>
-            </h2>
+                <h2>
+                    Detail Pesanan #<?= (int) $detailPesanan["id_pesanan"]; ?>
+                </h2>
 
-            <div class="detail-ringkasan">
+                <div class="detail-ringkasan">
 
-                <div class="detail-item">
-                    <span>Tanggal Pesanan</span>
-                    <strong>
-                        <?= htmlspecialchars(
-                                $detailPesanan["tanggal_pesanan"],
+                    <div class="detail-item">
+                        <span>Tanggal Pesanan</span>
+                        <strong>
+                            <?= htmlspecialchars(
+                                formatTanggal($detailPesanan["tanggal_pesanan"]),
                                 ENT_QUOTES,
                                 "UTF-8"
                             ); ?>
-                    </strong>
-                </div>
+                        </strong>
+                    </div>
 
-                <div class="detail-item">
-                    <span>Tanggal Pengambilan</span>
-                    <strong>
-                        <?= htmlspecialchars(
-                                formatTanggal(
-                                    $detailPesanan["tanggal_pengambilan"] ?? null
-                                ),
+                    <div class="detail-item">
+                        <span>Tanggal Pengambilan</span>
+                        <strong>
+                            <?= htmlspecialchars(
+                                formatTanggal($detailPesanan["tanggal_pengambilan"] ?? null),
                                 ENT_QUOTES,
                                 "UTF-8"
                             ); ?>
-                    </strong>
-                </div>
+                        </strong>
+                    </div>
 
-                <div class="detail-item">
-                    <span>Total Berat</span>
-                    <strong>
-                        <?= number_format(
+                    <div class="detail-item">
+                        <span>Total Berat</span>
+                        <strong>
+                            <?= number_format(
                                 (float) $detailPesanan["total_berat"],
                                 2,
                                 ",",
                                 "."
                             ); ?> kg
-                    </strong>
-                </div>
+                        </strong>
+                    </div>
 
-                <div class="detail-item">
-                    <span>Total Harga</span>
-                    <strong>
-                        <?= rupiah($detailPesanan["total_harga"]); ?>
-                    </strong>
-                </div>
+                    <div class="detail-item">
+                        <span>Total Harga</span>
+                        <strong>
+                            <?= rupiah($detailPesanan["total_harga"]); ?>
+                        </strong>
+                    </div>
 
-                <div class="detail-item">
-                    <span>Status Pesanan</span>
-                    <strong>
-                        <span class="riwayat-status status-<?= htmlspecialchars(
+                    <div class="detail-item">
+                        <span>Status Pesanan</span>
+                        <strong>
+                            <span class="riwayat-status status-<?= htmlspecialchars(
                                 $detailPesanan["status"],
                                 ENT_QUOTES,
                                 "UTF-8"
                             ); ?>">
-                            <?= htmlspecialchars(
+                                <?= htmlspecialchars(
                                     formatStatus($detailPesanan["status"]),
                                     ENT_QUOTES,
                                     "UTF-8"
                                 ); ?>
-                        </span>
-                    </strong>
-                </div>
+                            </span>
+                        </strong>
+                    </div>
 
-                <div class="detail-item">
-                    <span>Metode Pembayaran</span>
-                    <strong>
-                        <?= htmlspecialchars(
+                    <div class="detail-item">
+                        <span>Metode Pembayaran</span>
+                        <strong>
+                            <?= htmlspecialchars(
                                 strtoupper($detailPesanan["metode_pembayaran"]),
                                 ENT_QUOTES,
                                 "UTF-8"
                             ); ?>
-                    </strong>
-                </div>
+                        </strong>
+                    </div>
 
-                <div class="detail-item">
-                    <span>Status Pembayaran</span>
-                    <strong>
-                        <span class="riwayat-status status-<?= htmlspecialchars(
+                    <div class="detail-item">
+                        <span>Status Pembayaran</span>
+                        <strong>
+                            <span class="riwayat-status status-<?= htmlspecialchars(
                                 $detailPesanan["status_pembayaran"],
                                 ENT_QUOTES,
                                 "UTF-8"
                             ); ?>">
-                            <?= htmlspecialchars(
-                                    formatStatus(
-                                        $detailPesanan["status_pembayaran"]
-                                    ),
+                                <?= htmlspecialchars(
+                                    formatStatus($detailPesanan["status_pembayaran"]),
                                     ENT_QUOTES,
                                     "UTF-8"
                                 ); ?>
-                        </span>
-                    </strong>
+                            </span>
+                        </strong>
+                    </div>
+
                 </div>
 
-            </div>
+                <h3>Produk yang Dipesan</h3>
 
-            <h3>Produk yang Dipesan</h3>
+                <div class="riwayat-scroll">
+                    <table class="riwayat-tabel">
 
-            <div class="riwayat-scroll">
-                <table class="riwayat-tabel">
+                        <thead>
+                            <tr>
+                                <th>Nama Produk</th>
+                                <th>Jumlah</th>
+                                <th>Harga per Kg</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
 
-                    <thead>
-                        <tr>
-                            <th>Nama Produk</th>
-                            <th>Jumlah</th>
-                            <th>Harga per Kg</th>
-                            <th>Subtotal</th>
-                        </tr>
-                    </thead>
+                        <tbody>
 
-                    <tbody>
+                            <?php if (count($detailProduk) > 0): ?>
 
-                        <?php if (count($detailProduk) > 0): ?>
+                                <?php foreach ($detailProduk as $produk): ?>
 
-                        <?php foreach ($detailProduk as $produk): ?>
-                        <tr>
-                            <td>
-                                <?= htmlspecialchars(
+                                    <tr>
+                                        <td>
+                                            <?= htmlspecialchars(
                                                 $produk["nama_produk"] ?? "Produk",
                                                 ENT_QUOTES,
                                                 "UTF-8"
                                             ); ?>
-                            </td>
+                                        </td>
 
-                            <td>
-                                <?= number_format(
+                                        <td>
+                                            <?= number_format(
                                                 (float) $produk["jumlah_kg"],
                                                 2,
                                                 ",",
                                                 "."
                                             ); ?> kg
-                            </td>
+                                        </td>
 
-                            <td>
-                                <?= rupiah($produk["harga_satuan"]); ?>
-                            </td>
+                                        <td>
+                                            <?= rupiah($produk["harga_satuan"]); ?>
+                                        </td>
 
-                            <td>
-                                <?= rupiah($produk["subtotal"]); ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
+                                        <td>
+                                            <?= rupiah($produk["subtotal"]); ?>
+                                        </td>
+                                    </tr>
 
-                        <?php else: ?>
+                                <?php endforeach; ?>
 
-                        <tr>
-                            <td colspan="4">
-                                Detail produk tidak tersedia.
-                            </td>
-                        </tr>
+                            <?php else: ?>
 
-                        <?php endif; ?>
+                                <tr>
+                                    <td colspan="4">
+                                        Detail produk tidak tersedia.
+                                    </td>
+                                </tr>
 
-                    </tbody>
-                </table>
-            </div>
+                            <?php endif; ?>
 
-            <?php if (!empty($detailPesanan["catatan"])): ?>
-            <p>
-                <strong>Catatan pesanan:</strong><br>
+                        </tbody>
+                    </table>
+                </div>
 
-                <?= nl2br(
+                <?php if (!empty($detailPesanan["catatan"])): ?>
+
+                    <p>
+                        <strong>Catatan pesanan:</strong><br>
+
+                        <?= nl2br(
                             htmlspecialchars(
                                 $detailPesanan["catatan"],
                                 ENT_QUOTES,
                                 "UTF-8"
                             )
                         ); ?>
-            </p>
-            <?php endif; ?>
+                    </p>
 
-            <?php if (
-                    $detailPesanan["metode_pembayaran"] === "qris" &&
+                <?php endif; ?>
+
+                <?php
+                $bisaBayar =
+                    pembayaranOnline($detailPesanan["metode_pembayaran"]) &&
                     $detailPesanan["status_pembayaran"] !== "lunas" &&
-                    $detailPesanan["status"] !== "dibatalkan"
-                ): ?>
+                    $detailPesanan["status"] !== "dibatalkan";
+                ?>
 
-            <div class="riwayat-notifikasi">
-                Pesanan ini menggunakan QRIS dan belum lunas.
-                Tekan tombol di bawah untuk membuka halaman pembayaran.
-            </div>
+                <?php if ($bisaBayar): ?>
 
-            <a href="pembayaran.php?id=<?= (int) $detailPesanan["id_pesanan"]; ?>" class="btn-bayar-qris">
-                Bayar QRIS
-            </a>
+                    <?php if ($detailPesanan["status_pembayaran"] === "menunggu_verifikasi"): ?>
 
-            <?php endif; ?>
+                        <div class="riwayat-notifikasi">
+                            Bukti pembayaran kamu sedang menunggu verifikasi admin.
+                            Silakan tunggu sampai pembayaran diperiksa.
+                        </div>
 
-        </section>
+                    <?php elseif ($detailPesanan["status_pembayaran"] === "ditolak"): ?>
+
+                        <div class="riwayat-notifikasi notifikasi-gagal">
+                            Bukti pembayaran ditolak. Silakan buka halaman pembayaran
+                            untuk mengunggah bukti yang benar.
+                        </div>
+
+                        <a
+                            href="pembayaran.php?id=<?= (int) $detailPesanan["id_pesanan"]; ?>"
+                            class="btn-bayar"
+                        >
+                            Upload Ulang Bukti Pembayaran
+                        </a>
+
+                    <?php else: ?>
+
+                        <div class="riwayat-notifikasi">
+                            Pesanan ini belum dibayar. Silakan lanjutkan pembayaran
+                            sesuai metode yang dipilih.
+                        </div>
+
+                        <a
+                            href="pembayaran.php?id=<?= (int) $detailPesanan["id_pesanan"]; ?>"
+                            class="btn-bayar"
+                        >
+                            Bayar / Upload Bukti
+                        </a>
+
+                    <?php endif; ?>
+
+                <?php elseif ($detailPesanan["status_pembayaran"] === "lunas"): ?>
+
+                    <div class="riwayat-notifikasi notifikasi-sukses">
+                        Pembayaran sudah lunas. Terima kasih telah berbelanja
+                        di Tampomas Berkah!
+                    </div>
+
+                <?php elseif ($detailPesanan["status"] === "dibatalkan"): ?>
+
+                    <div class="riwayat-notifikasi notifikasi-gagal">
+                        Pesanan ini telah dibatalkan.
+                    </div>
+
+                <?php endif; ?>
+
+            </section>
 
         <?php endif; ?>
 
-        <?php endif; ?>
+    <?php endif; ?>
 
-        <section class="riwayat-kartu">
+    <section class="riwayat-kartu">
 
-            <h2>Riwayat Pesanan</h2>
+        <h2>Riwayat Pesanan</h2>
 
-            <div class="riwayat-scroll">
+        <div class="riwayat-scroll">
 
-                <table class="riwayat-tabel">
+            <table class="riwayat-tabel">
 
-                    <thead>
-                        <tr>
-                            <th>No. Pesanan</th>
-                            <th>Tanggal Pesanan</th>
-                            <th>Tanggal Pengambilan</th>
-                            <th>Total Berat</th>
-                            <th>Total Harga</th>
-                            <th>Status Pesanan</th>
-                            <th>Pembayaran</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
+                <thead>
+                    <tr>
+                        <th>No. Pesanan</th>
+                        <th>Tanggal Pesanan</th>
+                        <th>Tanggal Pengambilan</th>
+                        <th>Total Berat</th>
+                        <th>Total Harga</th>
+                        <th>Status Pesanan</th>
+                        <th>Pembayaran</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
 
-                    <tbody>
+                <tbody>
 
-                        <?php if (mysqli_num_rows($hasilRiwayat) > 0): ?>
+                    <?php if (mysqli_num_rows($hasilRiwayat) > 0): ?>
 
                         <?php while ($pesanan = mysqli_fetch_assoc($hasilRiwayat)): ?>
 
-                        <tr>
-                            <td>
-                                #<?= (int) $pesanan["id_pesanan"]; ?>
-                            </td>
+                            <tr>
 
-                            <td>
-                                <?= htmlspecialchars(
-                                        $pesanan["tanggal_pesanan"],
+                                <td>
+                                    #<?= (int) $pesanan["id_pesanan"]; ?>
+                                </td>
+
+                                <td>
+                                    <?= htmlspecialchars(
+                                        formatTanggal($pesanan["tanggal_pesanan"]),
                                         ENT_QUOTES,
                                         "UTF-8"
                                     ); ?>
-                            </td>
+                                </td>
 
-                            <td>
-                                <?= htmlspecialchars(
-                                        formatTanggal(
-                                            $pesanan["tanggal_pengambilan"] ?? null
-                                        ),
+                                <td>
+                                    <?= htmlspecialchars(
+                                        formatTanggal($pesanan["tanggal_pengambilan"] ?? null),
                                         ENT_QUOTES,
                                         "UTF-8"
                                     ); ?>
-                            </td>
+                                </td>
 
-                            <td>
-                                <?= number_format(
+                                <td>
+                                    <?= number_format(
                                         (float) $pesanan["total_berat"],
                                         2,
                                         ",",
                                         "."
                                     ); ?> kg
-                            </td>
+                                </td>
 
-                            <td>
-                                <?= rupiah($pesanan["total_harga"]); ?>
-                            </td>
+                                <td>
+                                    <?= rupiah($pesanan["total_harga"]); ?>
+                                </td>
 
-                            <td>
-                                <span class="riwayat-status status-<?= htmlspecialchars(
+                                <td>
+                                    <span class="riwayat-status status-<?= htmlspecialchars(
                                         $pesanan["status"],
                                         ENT_QUOTES,
                                         "UTF-8"
                                     ); ?>">
-                                    <?= htmlspecialchars(
+                                        <?= htmlspecialchars(
                                             formatStatus($pesanan["status"]),
                                             ENT_QUOTES,
                                             "UTF-8"
                                         ); ?>
-                                </span>
-                            </td>
+                                    </span>
+                                </td>
 
-                            <td>
-                                <strong>
-                                    <?= htmlspecialchars(
-                                            strtoupper(
-                                                $pesanan["metode_pembayaran"]
-                                            ),
+                                <td>
+                                    <strong>
+                                        <?= htmlspecialchars(
+                                            strtoupper($pesanan["metode_pembayaran"]),
                                             ENT_QUOTES,
                                             "UTF-8"
                                         ); ?>
-                                </strong>
+                                    </strong>
 
-                                <br>
+                                    <br>
 
-                                <span class="riwayat-status status-<?= htmlspecialchars(
+                                    <span class="riwayat-status status-<?= htmlspecialchars(
                                         $pesanan["status_pembayaran"],
                                         ENT_QUOTES,
                                         "UTF-8"
                                     ); ?>">
-                                    <?= htmlspecialchars(
-                                            formatStatus(
-                                                $pesanan["status_pembayaran"]
-                                            ),
+                                        <?= htmlspecialchars(
+                                            formatStatus($pesanan["status_pembayaran"]),
                                             ENT_QUOTES,
                                             "UTF-8"
                                         ); ?>
-                                </span>
-                            </td>
+                                    </span>
+                                </td>
 
-                            <td class="riwayat-aksi">
+                                <td class="riwayat-aksi">
 
-                                <a href="pesanan_saya.php?id=<?= (int) $pesanan["id_pesanan"]; ?>"
-                                    class="riwayat-btn-detail">
-                                    Detail
-                                </a>
+                                    <a
+                                        href="pesanan_saya.php?id=<?= (int) $pesanan["id_pesanan"]; ?>"
+                                        class="riwayat-btn-detail"
+                                    >
+                                        Detail
+                                    </a>
 
-                                <?php if (
-                                        $pesanan["metode_pembayaran"] === "qris" &&
+                                    <?php if (
+                                        pembayaranOnline($pesanan["metode_pembayaran"]) &&
                                         $pesanan["status_pembayaran"] !== "lunas" &&
                                         $pesanan["status"] !== "dibatalkan"
                                     ): ?>
 
-                                <br>
+                                        <br>
 
-                                <a href="pembayaran.php?id=<?= (int) $pesanan["id_pesanan"]; ?>" class="btn-bayar-qris">
-                                    Bayar QRIS
-                                </a>
+                                        <?php if ($pesanan["status_pembayaran"] === "menunggu_verifikasi"): ?>
 
-                                <?php endif; ?>
+                                            <span class="riwayat-status status-menunggu_verifikasi">
+                                                Menunggu Verifikasi
+                                            </span>
 
-                            </td>
-                        </tr>
+                                        <?php else: ?>
+
+                                            <a
+                                                href="pembayaran.php?id=<?= (int) $pesanan["id_pesanan"]; ?>"
+                                                class="btn-bayar"
+                                            >
+                                                <?= $pesanan["status_pembayaran"] === "ditolak"
+                                                    ? "Upload Ulang"
+                                                    : "Bayar"; ?>
+                                            </a>
+
+                                        <?php endif; ?>
+
+                                    <?php endif; ?>
+
+                                </td>
+
+                            </tr>
 
                         <?php endwhile; ?>
 
-                        <?php else: ?>
+                    <?php else: ?>
 
                         <tr>
                             <td colspan="8" class="riwayat-kosong">
@@ -743,27 +819,27 @@ $hasilRiwayat = mysqli_stmt_get_result($stmtRiwayat);
                             </td>
                         </tr>
 
-                        <?php endif; ?>
+                    <?php endif; ?>
 
-                    </tbody>
+                </tbody>
 
-                </table>
+            </table>
 
-            </div>
-        </section>
-
-    </main>
-
-    <footer class="footer">
-        <div class="footer-bottom">
-            © 2026 Tampomas Berkah. Semua hak dilindungi.
         </div>
-    </footer>
 
-    <script src="assets/script.js"></script>
+    </section>
+
+</main>
+
+<footer class="footer">
+    <div class="footer-bottom">
+        © 2026 Tampomas Berkah. Semua hak dilindungi.
+    </div>
+</footer>
+
+<script src="assets/script.js"></script>
 
 </body>
-
 </html>
 
 <?php

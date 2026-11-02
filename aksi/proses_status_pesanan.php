@@ -41,11 +41,11 @@ if (
 try {
     mysqli_begin_transaction($koneksi);
 
-    // Kunci pesanan agar pembatalan tidak memproses
-    // pengembalian stok secara bersamaan.
+    // Ambil status pesanan dan pembayaran
+    // FOR UPDATE mencegah perubahan bersamaan.
     $stmt = mysqli_prepare(
         $koneksi,
-        "SELECT status
+        "SELECT status, status_pembayaran, metode_pembayaran
          FROM tpesanan
          WHERE id_pesanan = ?
          FOR UPDATE"
@@ -64,24 +64,36 @@ try {
     }
 
     $status_lama = $pesanan["status"];
+    $status_pembayaran = $pesanan["status_pembayaran"];
+    $metode_pembayaran = $pesanan["metode_pembayaran"];
 
-    // Jika status tidak berubah, tidak perlu memproses ulang.
+    // Jika status tidak berubah
     if ($status_lama === $status_baru) {
         mysqli_commit($koneksi);
         header("Location: ../admin/pesanan.php?pesan=berhasil");
         exit;
     }
 
-    // Pesanan yang sudah dibatalkan tidak boleh diaktifkan
-    // kembali agar stok tidak terhitung dua kali.
+    // Pesanan yang sudah dibatalkan tidak boleh diaktifkan kembali
     if ($status_lama === "dibatalkan") {
+        throw new Exception("Pesanan sudah dibatalkan.");
+    }
+
+    // Pembayaran transfer dan QRIS harus lunas
+    // sebelum pesanan siap diambil atau selesai.
+    if (
+        in_array($status_baru, ["siap_diambil", "selesai"], true) &&
+        in_array($metode_pembayaran, ["transfer", "qris"], true) &&
+        $status_pembayaran !== "lunas"
+    ) {
         mysqli_rollback($koneksi);
-        header("Location: ../admin/pesanan.php?pesan=sudah_dibatalkan");
+        header("Location: ../admin/pesanan.php?pesan=belum_lunas");
         exit;
     }
 
-    // Jika dibatalkan, kembalikan stok seluruh produk.
+    // Jika pesanan dibatalkan, kembalikan stok produk
     if ($status_baru === "dibatalkan") {
+
         $stmt = mysqli_prepare(
             $koneksi,
             "SELECT id_produk, jumlah_kg
@@ -152,18 +164,19 @@ try {
 
     if (!mysqli_stmt_execute($stmt)) {
         mysqli_stmt_close($stmt);
-        throw new Exception("Gagal memperbarui status.");
+        throw new Exception("Gagal memperbarui status pesanan.");
     }
 
     mysqli_stmt_close($stmt);
 
-    // Stok dan status disimpan bersama-sama.
+    // Simpan semua perubahan
     mysqli_commit($koneksi);
 
     header("Location: ../admin/pesanan.php?pesan=berhasil");
     exit;
 
 } catch (Throwable $e) {
+
     mysqli_rollback($koneksi);
 
     error_log("Proses status pesanan: " . $e->getMessage());

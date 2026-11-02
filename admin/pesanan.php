@@ -1,4 +1,4 @@
-
+```php
 <?php
 session_start();
 require_once __DIR__ . "/../config/koneksi.php";
@@ -13,40 +13,7 @@ if (
     exit;
 }
 
-// Ambil semua pesanan beserta nama pelanggan dan produknya
-$query = mysqli_query($koneksi, "
-    SELECT
-        p.id_pesanan,
-        u.nama AS nama_pelanggan,
-        p.tanggal_pesanan,
-        p.tanggal_pengambilan,
-        p.total_berat,
-        p.total_harga,
-        p.status,
-        p.metode_pembayaran,
-        p.status_pembayaran,
-        (
-            SELECT GROUP_CONCAT(
-                CONCAT(pr.nama_produk, ' (', d.jumlah_kg, ' kg)')
-                SEPARATOR ', '
-            )
-            FROM tdetail_pesanan d
-            JOIN tproduk pr ON d.id_produk = pr.id_produk
-            WHERE d.id_pesanan = p.id_pesanan
-        ) AS detail_produk
-    FROM tpesanan p
-    JOIN tuser u ON p.id_user = u.id_user
-    ORDER BY p.tanggal_pesanan DESC
-");
-
-if (!$query) {
-    die(
-        "Gagal mengambil data pesanan: " .
-        htmlspecialchars(mysqli_error($koneksi), ENT_QUOTES, "UTF-8")
-    );
-}
-
-// Fungsi untuk mengamankan output
+// Fungsi keamanan output
 function e($nilai) {
     return htmlspecialchars(
         (string) ($nilai ?? "-"),
@@ -63,14 +30,46 @@ function formatTanggal($tanggal) {
 
     $timestamp = strtotime($tanggal);
 
-    if ($timestamp === false) {
-        return "Belum ditentukan";
-    }
-
-    return date("d-m-Y", $timestamp);
+    return $timestamp === false
+        ? "Belum ditentukan"
+        : date("d-m-Y", $timestamp);
 }
 
-$total_pesanan = mysqli_num_rows($query);
+// Ambil data pesanan
+$query = "
+    SELECT
+        p.id_pesanan,
+        u.nama AS nama_pelanggan,
+        p.tanggal_pesanan,
+        p.tanggal_pengambilan,
+        p.total_berat,
+        p.total_harga,
+        p.status,
+        p.metode_pembayaran,
+        p.status_pembayaran,
+        p.bukti_pembayaran,
+        GROUP_CONCAT(
+            CONCAT(pr.nama_produk, ' (', d.jumlah_kg, ' kg)')
+            SEPARATOR ', '
+        ) AS daftar_produk
+    FROM tpesanan p
+    JOIN tuser u ON p.id_user = u.id_user
+    LEFT JOIN tdetail_pesanan d ON p.id_pesanan = d.id_pesanan
+    LEFT JOIN tproduk pr ON d.id_produk = pr.id_produk
+    GROUP BY p.id_pesanan
+    ORDER BY p.id_pesanan DESC
+";
+
+$result = mysqli_query($koneksi, $query);
+
+if (!$result) {
+    die(
+        "Gagal mengambil data pesanan: " .
+        e(mysqli_error($koneksi))
+    );
+}
+
+$total_pesanan = mysqli_num_rows($result);
 ?>
 
 <!DOCTYPE html>
@@ -114,9 +113,9 @@ $total_pesanan = mysqli_num_rows($query);
                 Status pesanan berhasil diperbarui!
             </div>
 
-        <?php elseif ($_GET["pesan"] === "gagal"): ?>
+        <?php elseif ($_GET["pesan"] === "belum_lunas"): ?>
             <div class="pesanan-notifikasi">
-                Gagal memperbarui status pesanan.
+                Pembayaran belum lunas. Pesanan belum bisa diselesaikan.
             </div>
 
         <?php elseif ($_GET["pesan"] === "sudah_dibatalkan"): ?>
@@ -126,7 +125,32 @@ $total_pesanan = mysqli_num_rows($query);
 
         <?php elseif ($_GET["pesan"] === "tidak_valid"): ?>
             <div class="pesanan-notifikasi">
-                Permintaan status tidak valid.
+                Permintaan tidak valid.
+            </div>
+
+        <?php elseif ($_GET["pesan"] === "gagal"): ?>
+            <div class="pesanan-notifikasi">
+                Gagal memperbarui data pesanan.
+            </div>
+        <?php endif; ?>
+
+    <?php endif; ?>
+
+    <?php if (isset($_GET["verifikasi"])): ?>
+
+        <?php if ($_GET["verifikasi"] === "berhasil"): ?>
+            <div class="pesanan-notifikasi">
+                Verifikasi pembayaran berhasil diproses!
+            </div>
+
+        <?php elseif ($_GET["verifikasi"] === "gagal"): ?>
+            <div class="pesanan-notifikasi">
+                Gagal memproses verifikasi pembayaran.
+            </div>
+
+        <?php elseif ($_GET["verifikasi"] === "tidak_valid"): ?>
+            <div class="pesanan-notifikasi">
+                Data verifikasi tidak valid.
             </div>
         <?php endif; ?>
 
@@ -152,8 +176,10 @@ $total_pesanan = mysqli_num_rows($query);
                         <th>Total Berat</th>
                         <th>Total Harga</th>
                         <th>Pembayaran</th>
+                        <th>Bukti Pembayaran</th>
                         <th>Status Pesanan</th>
                         <th>Status Bayar</th>
+                        <th>Verifikasi</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -162,9 +188,10 @@ $total_pesanan = mysqli_num_rows($query);
 
                 <?php if ($total_pesanan > 0): ?>
 
-                    <?php while ($pesanan = mysqli_fetch_assoc($query)): ?>
+                    <?php while ($pesanan = mysqli_fetch_assoc($result)): ?>
 
                     <tr>
+
                         <td>
                             #<?= (int) $pesanan["id_pesanan"]; ?>
                         </td>
@@ -177,19 +204,17 @@ $total_pesanan = mysqli_num_rows($query);
 
                         <td>
                             <?= e(
-                                $pesanan["detail_produk"]
+                                $pesanan["daftar_produk"]
                                 ?: "Detail tidak tersedia"
                             ); ?>
                         </td>
 
                         <td>
-                            <?= e($pesanan["tanggal_pesanan"]); ?>
+                            <?= e(formatTanggal($pesanan["tanggal_pesanan"])); ?>
                         </td>
 
                         <td>
-                            <?= e(
-                                formatTanggal($pesanan["tanggal_pengambilan"])
-                            ); ?>
+                            <?= e(formatTanggal($pesanan["tanggal_pengambilan"])); ?>
                         </td>
 
                         <td>
@@ -213,9 +238,25 @@ $total_pesanan = mysqli_num_rows($query);
                         </td>
 
                         <td>
-                            <?= e(
-                                strtoupper($pesanan["metode_pembayaran"])
-                            ); ?>
+                            <?= e(strtoupper($pesanan["metode_pembayaran"])); ?>
+                        </td>
+
+                        <td>
+                            <?php if (!empty($pesanan["bukti_pembayaran"])): ?>
+
+                                <a
+                                    href="../<?= e($pesanan["bukti_pembayaran"]); ?>"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Lihat Bukti
+                                </a>
+
+                            <?php else: ?>
+
+                                Belum ada
+
+                            <?php endif; ?>
                         </td>
 
                         <td>
@@ -231,6 +272,65 @@ $total_pesanan = mysqli_num_rows($query);
                         </td>
 
                         <td>
+
+                            <?php if (
+                                in_array($pesanan["metode_pembayaran"], ["transfer", "qris"], true) &&
+                                $pesanan["status_pembayaran"] === "menunggu_verifikasi" &&
+                                !empty($pesanan["bukti_pembayaran"]) &&
+                                $pesanan["status"] !== "dibatalkan"
+                            ): ?>
+
+                                <form
+                                    action="../aksi/proses_verifikasi_pembayaran.php"
+                                    method="POST"
+                                >
+
+                                    <input
+                                        type="hidden"
+                                        name="id_pesanan"
+                                        value="<?= (int) $pesanan["id_pesanan"]; ?>"
+                                    >
+
+                                    <button
+                                        type="submit"
+                                        name="keputusan"
+                                        value="terima"
+                                        class="btn-update-status"
+                                        onclick="return confirm('Terima pembayaran ini?')"
+                                    >
+                                        Terima
+                                    </button>
+
+                                    <button
+                                        type="submit"
+                                        name="keputusan"
+                                        value="tolak"
+                                        class="btn-update-status"
+                                        onclick="return confirm('Tolak pembayaran ini?')"
+                                    >
+                                        Tolak
+                                    </button>
+
+                                </form>
+
+                            <?php elseif ($pesanan["status_pembayaran"] === "lunas"): ?>
+
+                                <span>Lunas</span>
+
+                            <?php elseif ($pesanan["status_pembayaran"] === "ditolak"): ?>
+
+                                <span>Ditolak</span>
+
+                            <?php else: ?>
+
+                                <span>-</span>
+
+                            <?php endif; ?>
+
+                        </td>
+
+                        <td>
+
                             <form
                                 action="../aksi/proses_status_pesanan.php"
                                 method="POST"
@@ -244,45 +344,28 @@ $total_pesanan = mysqli_num_rows($query);
                                 >
 
                                 <select name="status" required>
-                                    <option
-                                        value="menunggu"
-                                        <?= $pesanan["status"] === "menunggu"
-                                            ? "selected" : ""; ?>
-                                    >
-                                        Menunggu
-                                    </option>
 
-                                    <option
-                                        value="diproses"
-                                        <?= $pesanan["status"] === "diproses"
-                                            ? "selected" : ""; ?>
-                                    >
-                                        Diproses
-                                    </option>
+                                    <?php
+                                    $daftar_status = [
+                                        "menunggu" => "Menunggu",
+                                        "diproses" => "Diproses",
+                                        "siap_diambil" => "Siap Diambil",
+                                        "selesai" => "Selesai",
+                                        "dibatalkan" => "Dibatalkan"
+                                    ];
+                                    ?>
 
-                                    <option
-                                        value="siap_diambil"
-                                        <?= $pesanan["status"] === "siap_diambil"
-                                            ? "selected" : ""; ?>
-                                    >
-                                        Siap Diambil
-                                    </option>
+                                    <?php foreach ($daftar_status as $nilai => $label): ?>
 
-                                    <option
-                                        value="selesai"
-                                        <?= $pesanan["status"] === "selesai"
-                                            ? "selected" : ""; ?>
-                                    >
-                                        Selesai
-                                    </option>
+                                        <option
+                                            value="<?= e($nilai); ?>"
+                                            <?= $pesanan["status"] === $nilai ? "selected" : ""; ?>
+                                        >
+                                            <?= e($label); ?>
+                                        </option>
 
-                                    <option
-                                        value="dibatalkan"
-                                        <?= $pesanan["status"] === "dibatalkan"
-                                            ? "selected" : ""; ?>
-                                    >
-                                        Dibatalkan
-                                    </option>
+                                    <?php endforeach; ?>
+
                                 </select>
 
                                 <button
@@ -293,7 +376,9 @@ $total_pesanan = mysqli_num_rows($query);
                                 </button>
 
                             </form>
+
                         </td>
+
                     </tr>
 
                     <?php endwhile; ?>
@@ -301,7 +386,7 @@ $total_pesanan = mysqli_num_rows($query);
                 <?php else: ?>
 
                     <tr>
-                        <td colspan="11" class="pesanan-kosong">
+                        <td colspan="13" class="pesanan-kosong">
                             Belum ada transaksi.
                         </td>
                     </tr>
@@ -319,3 +404,4 @@ $total_pesanan = mysqli_num_rows($query);
 
 </body>
 </html>
+```
