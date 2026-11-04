@@ -69,7 +69,7 @@ $total_pelanggan = $data_pelanggan["total"];
     <aside class="admin-sidebar">
 
         <div class="sidebar-logo">
-            🥬 Tampomas Berkah
+         Tampomas Berkah
         </div>
 
         <div class="sidebar-title">
@@ -97,6 +97,10 @@ $total_pelanggan = $data_pelanggan["total"];
 
             <a href="pembayaran.php">
                 Pembayaran
+            </a>
+
+            <a href="omset.php">
+                Data Omzet 
             </a>
 
         </nav>
@@ -139,7 +143,7 @@ $total_pelanggan = $data_pelanggan["total"];
                 <h1>Dashboard</h1>
 
                 <p>
-                    Selamat datang di panel admin Tampomas Berkah.
+                    Welcome Bos Mudaaa
                 </p>
 
             </div>

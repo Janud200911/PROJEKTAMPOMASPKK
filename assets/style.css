@@ -2605,3 +2605,220 @@ a {
     font-size: 13px;
     margin-top: 10px;
 }
+
+
+/* =========================
+   HALAMAN DATA OMZET
+========================= */
+
+.omset-container {
+    max-width: 1400px;
+    margin: auto;
+    padding: 30px;
+}
+
+/* Header */
+
+.omset-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.omset-header h1 {
+    margin: 0 0 8px;
+    color: #168044;
+}
+
+.omset-header p {
+    margin: 0;
+    color: #777;
+}
+
+/* Tombol */
+
+.omset-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.omset-button {
+    display: inline-block;
+    padding: 11px 17px;
+    background: #168044;
+    color: white;
+    border: none;
+    border-radius: 7px;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.omset-button:hover {
+    background: #126b39;
+}
+
+/* Filter */
+
+.omset-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 15px;
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.omset-filter-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #555;
+    font-weight: 600;
+}
+
+.omset-filter select {
+    padding: 11px 13px;
+    min-width: 150px;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    background: white;
+    outline: none;
+    font-size: 14px;
+}
+
+.omset-filter select:focus {
+    border-color: #168044;
+}
+
+/* Ringkasan */
+
+.omset-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+.omset-card {
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    padding: 23px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
+}
+
+.omset-card span {
+    color: #777;
+    font-size: 14px;
+}
+
+.omset-card h2 {
+    color: #168044;
+    font-size: 27px;
+    margin: 12px 0 0;
+}
+
+/* Section tabel */
+
+.omset-section {
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    overflow: hidden;
+}
+
+.omset-section h2 {
+    padding: 20px;
+    margin: 0;
+    font-size: 19px;
+    color: #222;
+    border-bottom: 1px solid #eee;
+}
+
+/* Tabel */
+
+.omset-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.omset-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 650px;
+}
+
+.omset-table th,
+.omset-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+}
+
+.omset-table th {
+    background: #f5f8f5;
+    color: #245b35;
+    font-weight: 700;
+}
+
+.omset-table td {
+    color: #444;
+}
+
+.omset-table tr:last-child td {
+    border-bottom: none;
+}
+
+.omset-table tbody tr:hover {
+    background: #fafdfb;
+}
+
+.omset-kosong {
+    text-align: center !important;
+    color: #888 !important;
+    padding: 30px !important;
+}
+
+/* Responsif */
+
+@media (max-width: 700px) {
+    .omset-container {
+        padding: 18px;
+    }
+
+    .omset-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .omset-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .omset-actions {
+        width: 100%;
+    }
+
+    .omset-button {
+        text-align: center;
+    }
+
+    .omset-filter {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .omset-filter select {
+        width: 100%;
+    }
+}

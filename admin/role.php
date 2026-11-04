@@ -149,7 +149,7 @@ if (!$queryUser) {
 
             <div class="role-header">
                 <h1>Data Role</h1>
-                <p>Atur hak akses setiap pengguna sistem.</p>
+                <center><p>Atur hak akses setiap pengguna sistem.</p></center>
             </div>
 
             <div class="role-table-box">
