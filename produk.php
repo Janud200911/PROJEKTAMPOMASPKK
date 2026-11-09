@@ -56,6 +56,11 @@ if (!$query) {
                     Produk
                 </a>
 
+                <a href="keranjang.php">
+                    Keranjang
+                    (<?= count($_SESSION["keranjang"] ?? []); ?>)
+                </a>
+
                 <a href="index.php#tentang">
                     Tentang
                 </a>
@@ -119,86 +124,91 @@ if (!$query) {
 
             <?php while ($produk = mysqli_fetch_assoc($query)) : ?>
 
-                <div class="produk-card">
+            <div class="produk-card">
 
-                    <!-- GAMBAR / IKON -->
-                    <div class="produk-image">
+                <!-- GAMBAR / IKON -->
+                <div class="produk-image">
 
-                        <?php if (stripos($produk["nama_produk"], "wortel") !== false): ?>
+                    <?php if (stripos($produk["nama_produk"], "wortel") !== false): ?>
 
-                            🥕
+                    🥕
 
-                        <?php elseif (stripos($produk["nama_produk"], "kentang") !== false): ?>
+                    <?php elseif (stripos($produk["nama_produk"], "kentang") !== false): ?>
 
-                            🥔
+                    🥔
 
-                        <?php else: ?>
+                    <?php else: ?>
 
-                            🥬
+                    🥬
 
-                        <?php endif; ?>
+                    <?php endif; ?>
 
-                    </div>
-
-
-                    <!-- INFORMASI -->
-                    <div class="produk-info">
-
-                        <span class="produk-kategori">
-                            SAYURAN
-                        </span>
+                </div>
 
 
-                        <h2>
-                            <?= htmlspecialchars($produk["nama_produk"]); ?>
-                        </h2>
+                <!-- INFORMASI -->
+                <div class="produk-info">
+
+                    <span class="produk-kategori">
+                        SAYURAN
+                    </span>
 
 
-                        <p>
-                            <?= htmlspecialchars($produk["deskripsi"]); ?>
-                        </p>
+                    <h2>
+                        <?= htmlspecialchars($produk["nama_produk"]); ?>
+                    </h2>
 
 
-                        <div class="produk-bottom">
+                    <p>
+                        <?= htmlspecialchars($produk["deskripsi"]); ?>
+                    </p>
 
-                            <div class="produk-harga">
 
-                                Rp<?= number_format(
+                    <div class="produk-bottom">
+
+                        <div class="produk-harga">
+
+                            Rp<?= number_format(
                                     $produk["harga_per_kg"],
                                     0,
                                     ',',
                                     '.'
                                 ); ?>
 
-                                <span>
-                                    / KG
-                                </span>
-
-                            </div>
-
-
-                            <?php if ($produk["stok_kg"] >= $produk["minimal_pembelian"]) : ?>
-
-                                <a
-                                    href="beli.php?id=<?= $produk["id_produk"]; ?>"
-                                    class="btn-beli"
-                                >
-                                    Beli
-                                </a>
-
-                            <?php else : ?>
-
-                                <span class="stok-habis">
-                                    Stok Tidak Cukup
-                                </span>
-
-                            <?php endif; ?>
+                            <span>
+                                / KG
+                            </span>
 
                         </div>
+
+
+                        <?php if ($produk["stok_kg"] >= $produk["minimal_pembelian"]) : ?>
+
+                        <form action="aksi/keranjang.php" method="POST" class="form-tambah-keranjang">
+
+                            <input type="hidden" name="aksi" value="tambah">
+
+                            <input type="hidden" name="id_produk" value="<?= (int) $produk["id_produk"]; ?>">
+
+                            <button type="submit" class="btn-beli">
+                                + Keranjang
+                            </button>
+
+                        </form>
+
+                        <?php else : ?>
+
+                        <span class="stok-habis">
+                            Stok Tidak Cukup
+                        </span>
+
+                        <?php endif; ?>
 
                     </div>
 
                 </div>
+
+            </div>
 
             <?php endwhile; ?>
 

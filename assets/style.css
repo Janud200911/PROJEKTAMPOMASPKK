@@ -2822,3 +2822,294 @@ a {
         width: 100%;
     }
 }
+
+
+
+.keranjang-page {
+    max-width: 1100px;
+    margin: auto;
+    padding: 45px 20px 60px;
+}
+
+.keranjang-header {
+    margin-bottom: 30px;
+}
+
+.keranjang-label {
+    color: #168044;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.keranjang-header h1 {
+    margin: 8px 0;
+    font-size: 30px;
+}
+
+.keranjang-header p {
+    color: #777;
+    font-size: 14px;
+}
+
+.keranjang-alert {
+    background: #e9f5ed;
+    color: #168044;
+    border: 1px solid #cce5d3;
+    padding: 12px 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.keranjang-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 25px;
+    align-items: start;
+}
+
+.keranjang-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.keranjang-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 9px;
+}
+
+.item-icon {
+    width: 75px;
+    height: 75px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f7f2;
+    border-radius: 8px;
+    font-size: 35px;
+}
+
+.item-detail {
+    flex: 1;
+}
+
+.item-detail h3 {
+    margin: 0 0 8px;
+    font-size: 17px;
+}
+
+.item-detail p,
+.item-detail small {
+    display: block;
+    margin: 5px 0;
+    color: #777;
+    font-size: 13px;
+}
+
+.item-subtotal {
+    display: block;
+    margin-top: 10px;
+    color: #168044;
+    font-size: 15px;
+}
+
+.item-action {
+    width: 140px;
+    flex-shrink: 0;
+}
+
+.form-update label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.form-update input {
+    width: 100%;
+    padding: 9px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.btn-update,
+.btn-hapus {
+    width: 100%;
+    padding: 8px;
+    margin-top: 7px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.btn-update {
+    background: #168044;
+    color: white;
+}
+
+.btn-hapus {
+    background: #fff0f0;
+    color: #dc3545;
+}
+
+.keranjang-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-kembali {
+    color: #168044;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.btn-kosongkan {
+    background: transparent;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.ringkasan-keranjang {
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 9px;
+    padding: 22px;
+}
+
+.ringkasan-keranjang h2 {
+    margin: 0 0 20px;
+    font-size: 18px;
+}
+
+.ringkasan-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 15px 0;
+    color: #666;
+    font-size: 13px;
+}
+
+.ringkasan-row strong {
+    color: #222;
+}
+
+.ringkasan-total {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid #eee;
+    padding-top: 18px;
+    margin-top: 20px;
+}
+
+.ringkasan-total span {
+    color: #666;
+    font-size: 13px;
+}
+
+.ringkasan-total strong {
+    color: #168044;
+    font-size: 23px;
+}
+
+.btn-checkout {
+    display: block;
+    text-align: center;
+    background: #168044;
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 20px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.btn-checkout:hover {
+    background: #126b39;
+}
+
+.ringkasan-keranjang > p {
+    color: #888;
+    font-size: 11px;
+    line-height: 1.6;
+    margin-top: 13px;
+}
+
+.keranjang-kosong {
+    text-align: center;
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 9px;
+    padding: 55px 20px;
+}
+
+.keranjang-icon {
+    font-size: 55px;
+    margin-bottom: 15px;
+}
+
+.keranjang-kosong h2 {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.keranjang-kosong p {
+    color: #777;
+    font-size: 14px;
+    margin-bottom: 22px;
+}
+
+.btn-lanjut {
+    display: inline-block;
+    background: #168044;
+    color: white;
+    padding: 11px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+@media (max-width: 750px) {
+    .keranjang-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .keranjang-item {
+        flex-wrap: wrap;
+    }
+
+    .item-action {
+        width: 100%;
+    }
+
+    .keranjang-footer {
+        flex-wrap: wrap;
+    }
+}
+
+
+.form-tambah-keranjang {
+    margin: 0;
+}
+
+.form-tambah-keranjang .btn-beli {
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+}
