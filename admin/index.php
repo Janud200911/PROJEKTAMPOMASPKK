@@ -95,10 +95,6 @@ $total_pelanggan = $data_pelanggan["total"];
                 Data Role
             </a>
 
-            <a href="pembayaran.php">
-                Pembayaran
-            </a>
-
             <a href="omset.php">
                 Data Omzet 
             </a>
